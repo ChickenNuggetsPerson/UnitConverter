@@ -1,39 +1,22 @@
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.midi.SysexMessage;
-
 public class Converter {
 
     public static void main(String[] args) throws Exception {
         Converter converter = new Converter();
 
-        System.out.println(converter.convert(Converter.MeasureType.Kilometer, Converter.MeasureType.Mile, 1));
+        ConvertResult result = converter.convert(MeasureType.Ft, MeasureType.Yrd, 10);
+        if (result.valid) {
+            System.out.println(result.result);
+        } else {
+            System.out.println("Could not compute");
+        }
+        
     }
 
 
-
-    public enum MeasureType {
-        // Dist
-        In, Ft, Yrd, Mile, 
-        Cm, Meter, Kilometer,
-
-        // Weight
-        Lb,
-        Kilogram,
-
-        // Temp
-        C,
-        F,
-        K,
-
-        // Volume
-        Gallon, Cup, Tablespoon, Teaspoon,
-        Liter, Mililiter, CubicMeter
-    }
-
-
-    public class ConvertConfig {
+    private class ConvertConfig {
         public MeasureType input;  // Ft   In
         public MeasureType output; // In   Ft
         public double ratio;       // 12   1/12
@@ -48,12 +31,12 @@ public class Converter {
         }
     }
 
-
-
     private List<ConvertConfig> configStorage = new ArrayList<>();
     private List<ConvertConfig> editHistory = new ArrayList<>();
 
     Converter() {
+
+        // Distances
         configStorage.add(new ConvertConfig(MeasureType.Ft, MeasureType.In, 12));
         configStorage.add(new ConvertConfig(MeasureType.Yrd, MeasureType.Ft, 3));
         configStorage.add(new ConvertConfig(MeasureType.Mile, MeasureType.Ft, 5284));
@@ -61,6 +44,26 @@ public class Converter {
         configStorage.add(new ConvertConfig(MeasureType.In, MeasureType.Cm, 2.54));
         configStorage.add(new ConvertConfig(MeasureType.Meter, MeasureType.Cm, 100));
         configStorage.add(new ConvertConfig(MeasureType.Kilometer, MeasureType.Meter, 1000));
+
+        // Weight
+        configStorage.add(new ConvertConfig(MeasureType.Lb, MeasureType.Gram, 453.592));
+        configStorage.add(new ConvertConfig(MeasureType.Kilogram, MeasureType.Gram, 1000));
+
+        // Volume
+        configStorage.add(new ConvertConfig(MeasureType.Gallon, MeasureType.Quart, 4));
+        configStorage.add(new ConvertConfig(MeasureType.Quart, MeasureType.Pint, 2));
+        configStorage.add(new ConvertConfig(MeasureType.Pint, MeasureType.Cup, 2));
+        configStorage.add(new ConvertConfig(MeasureType.Cup, MeasureType.Tablespoon, 16));
+        configStorage.add(new ConvertConfig(MeasureType.Tablespoon, MeasureType.Teaspoon, 3));
+        configStorage.add(new ConvertConfig(MeasureType.FluidOunce, MeasureType.Tablespoon, 2));
+
+        configStorage.add(new ConvertConfig(MeasureType.Gallon, MeasureType.Liter, 3.78541));
+        configStorage.add(new ConvertConfig(MeasureType.Liter, MeasureType.Mililiter, 1000));
+
+        configStorage.add(new ConvertConfig(MeasureType.Gallon, MeasureType.CubicInch, 231));
+        configStorage.add(new ConvertConfig(MeasureType.CubicFoot, MeasureType.CubicInch, 1728));
+        configStorage.add(new ConvertConfig(MeasureType.CubicMeter, MeasureType.CubicFoot, 35.3147));
+
     }
 
     // Determine if we have already made that change
@@ -118,7 +121,7 @@ public class Converter {
     }
 
     private boolean recursiveConvert() {
-        System.out.println(this.workingNumber);
+        //System.out.println(this.workingNumber);
 
         // Check if the config is in the storage
         for (int i = 0; i < this.configStorage.size(); i++) {
@@ -142,7 +145,7 @@ public class Converter {
         //System.out.print("Avaliable: ");
         //System.out.println(avaliable.size());
         for (int i = 0; i < avaliable.size(); i++) {
-            System.out.println(avaliable.get(i).ratio);
+            //System.out.println(avaliable.get(i).ratio);
 
             applyConfig(avaliable.get(i));
 
@@ -159,21 +162,34 @@ public class Converter {
         return false;
     }
 
+
+    private double roundVal(double input, int decimalPlaces) {
+        double power = Math.pow(10, decimalPlaces);
+        return Math.round(input * power) / power;
+    }
+
+    
     private double workingNumber;
     private MeasureType workingType;
-    private MeasureType inputType;
     private MeasureType outputType;
 
-    public double convert(MeasureType inputType, MeasureType outputType, double input) {
+    public class ConvertResult {
+        double result;
+        boolean valid;
+        ConvertResult(double result, boolean valid) {
+            this.result = result;
+            this.valid = valid;
+        }
+    }
+    public ConvertResult convert(MeasureType inputType, MeasureType outputType, double input) {
+        return convert(inputType, outputType, input, 3);
+    }   
+    public ConvertResult convert(MeasureType inputType, MeasureType outputType, double input, int decimalPlaces) {
         this.workingNumber = input;
         this.workingType = inputType;
-        this.inputType = inputType;
         this.outputType = outputType;
 
         boolean result = recursiveConvert();
-        System.out.println(result);
-        return workingNumber;
+        return new ConvertResult(roundVal(this.workingNumber, decimalPlaces), result);
     }   
-
-
 }
