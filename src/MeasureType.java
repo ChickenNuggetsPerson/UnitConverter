@@ -14,5 +14,8 @@ public enum MeasureType {
 
     // Volume
     Gallon, Quart, Pint, Cup, Tablespoon, Teaspoon, FluidOunce,
-    Liter, Mililiter, CubicMeter, CubicFoot, CubicInch
+    Liter, Mililiter, CubicMeter, CubicFoot, CubicInch,
+
+
+    NAN
 }

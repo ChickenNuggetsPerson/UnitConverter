@@ -6,9 +6,9 @@ public class Converter {
     public static void main(String[] args) throws Exception {
         Converter converter = new Converter();
 
-        ConvertResult result = converter.convert(MeasureType.Ft, MeasureType.Yrd, 10);
-        if (result.valid) {
-            System.out.println(result.result);
+        double result = converter.convert(MeasureType.Meter, MeasureType.In, 1);
+        if (!Double.isNaN(result)) {
+            System.out.println(result);
         } else {
             System.out.println("Could not compute");
         }
@@ -121,34 +121,24 @@ public class Converter {
     }
 
     private boolean recursiveConvert() {
-        //System.out.println(this.workingNumber);
-
         // Check if the config is in the storage
         for (int i = 0; i < this.configStorage.size(); i++) {
-            
             // Normal ratio
             if (this.workingType == this.configStorage.get(i).input && this.outputType == this.configStorage.get(i).output) { 
                 applyConfig(new ConvertConfig(this.workingType, this.outputType, this.configStorage.get(i).ratio));
                 return true;
             }
-
             // Reciprocal ratio
             if (this.workingType == this.configStorage.get(i).output && this.outputType == this.configStorage.get(i).input) { 
                 applyConfig(new ConvertConfig(this.workingType, this.outputType, 1.00 / this.configStorage.get(i).ratio));
                 return true;
             }
-
         }
 
         // Get Avaliable Options
         List<ConvertConfig> avaliable = determineAvaliableConfigs();
-        //System.out.print("Avaliable: ");
-        //System.out.println(avaliable.size());
         for (int i = 0; i < avaliable.size(); i++) {
-            //System.out.println(avaliable.get(i).ratio);
-
             applyConfig(avaliable.get(i));
-
             boolean result = recursiveConvert();
             if (!result) {
                 undoConfig(avaliable.get(i));
@@ -157,7 +147,6 @@ public class Converter {
             return true;
         }
     
-
         // If it can not get a stored config, start reciprocating
         return false;
     }
@@ -173,23 +162,18 @@ public class Converter {
     private MeasureType workingType;
     private MeasureType outputType;
 
-    public class ConvertResult {
-        double result;
-        boolean valid;
-        ConvertResult(double result, boolean valid) {
-            this.result = result;
-            this.valid = valid;
-        }
-    }
-    public ConvertResult convert(MeasureType inputType, MeasureType outputType, double input) {
+    public double convert(MeasureType inputType, MeasureType outputType, double input) {
         return convert(inputType, outputType, input, 3);
     }   
-    public ConvertResult convert(MeasureType inputType, MeasureType outputType, double input, int decimalPlaces) {
+    public double convert(MeasureType inputType, MeasureType outputType, double input, int decimalPlaces) {
         this.workingNumber = input;
         this.workingType = inputType;
         this.outputType = outputType;
 
         boolean result = recursiveConvert();
-        return new ConvertResult(roundVal(this.workingNumber, decimalPlaces), result);
+        if (result) {
+            return roundVal(this.workingNumber, decimalPlaces);
+        }
+        return Double.NaN;
     }   
 }
